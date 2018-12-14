@@ -41,18 +41,19 @@ class SingleAgent():
         """
         self.state_size = state_size
         self.action_size = action_size
+        self.num_agents = num_agents
         self.agent_index = agent_index
         self.seed = random.seed(random_seed)
         self.epsilon = EPSILON
 
         # Actor Network (w/ Target Network)
-        self.actor_local = Actor(state_size, action_size, random_seed).to(device)
-        self.actor_target = Actor(state_size, action_size, random_seed).to(device)
+        self.actor_local = Actor(self.state_size, self.action_size, random_seed).to(device)
+        self.actor_target = Actor(self.state_size, self.action_size, random_seed).to(device)
         self.actor_optimizer = optim.Adam(self.actor_local.parameters(), lr=LR_ACTOR)
 
         # Critic Network (w/ Target Network)
-        self.critic_local = Critic(state_size, action_size, random_seed).to(device)
-        self.critic_target = Critic(state_size, action_size, random_seed).to(device)
+        self.critic_local = Critic(state_size*num_agents, action_size*num_agents, random_seed).to(device)
+        self.critic_target = Critic(state_size*num_agents, action_size*num_agents, random_seed).to(device)
         self.critic_optimizer = optim.Adam(self.critic_local.parameters(), lr=LR_CRITIC, weight_decay=WEIGHT_DECAY)
 
         # Noise process
@@ -170,9 +171,18 @@ class MultiAgent():
         """
         actions = []
         for i, agent in enumerate(self.agents):
-            action = agent.act(states[i], add_noise)
+            action = agent.act(states[i])
             actions.append(action)
         return actions
+
+    def step(self, states, actions, rewards, next_states, dones, timestep):
+        for i, agent in enumerate(self.agents):
+            agent.step(states[i], actions[i], rewards[i], next_states[i], dones[i], timestep)
+
+    def reset(self):
+        """Resets the noise for each agent"""
+        for agent in self.agents:
+            agent.reset()
 
 class OUNoise:
     """Ornstein-Uhlenbeck process."""
