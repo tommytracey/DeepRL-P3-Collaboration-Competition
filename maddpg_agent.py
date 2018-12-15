@@ -25,7 +25,7 @@ EPSILON_DECAY = 1e-6    # decay rate for noise process
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-class SingleAgent():
+class Agent():
     """Interacts with and learns from the environment."""
 
     def __init__(self, state_size, action_size, num_agents, agent_index, random_seed):
@@ -62,18 +62,22 @@ class SingleAgent():
         # Replay memory
         self.memory = ReplayBuffer(action_size, BUFFER_SIZE, BATCH_SIZE, random_seed)
 
-    def act(self, state, add_noise=True):
+    def act(self, states, add_noise):
         """Returns actions for given state as per current policy."""
-        state = torch.from_numpy(state).float().to(device)
+        states = torch.from_numpy(states).float().to(device)
+        actions = np.zeros((self.num_agents, self.action_size))
         self.actor_local.eval()
         with torch.no_grad():
-            action = self.actor_local(state).cpu().data.numpy()
+            for agent_num, state in enumerate(states):
+                action = self.actor_local(state).cpu().data.numpy()
+                actions[agent_num, :] = action
+            # [i, self.actor_local(state).cpu().data.numpy() for i, state in enumerate(states)]
         self.actor_local.train()
         if add_noise:
-            action += self.epsilon * self.noise.sample()
+            actions += self.epsilon * self.noise.sample()
         return np.clip(action, -1, 1)
 
-    def step(self, state, action, reward, next_state, done, timestep):
+    def step(self, state, action, reward, next_state, done, timestep, agents):
         """Save experience in replay memory, and use random sample from buffer to learn."""
         # Save experience / reward
         self.memory.add(state, action, reward, next_state, done)
@@ -82,12 +86,12 @@ class SingleAgent():
         if len(self.memory) > BATCH_SIZE and timestep % LEARN_EVERY == 0:
             for _ in range(LEARN_NUM):
                 experiences = self.memory.sample()
-                self.learn(experiences, GAMMA)
+                self.learn(agents, experiences, GAMMA)
 
     def reset(self):
         self.noise.reset()
 
-    def learn(self, experiences, gamma):
+    def learn(self, agents, experiences, gamma):
         """Update policy and value parameters using given batch of experience tuples.
         Q_targets = r + γ * critic_target(next_state, actor_target(next_state))
         where:
@@ -96,6 +100,7 @@ class SingleAgent():
 
         Params
         ======
+            agents
             experiences (Tuple[torch.Tensor]): tuple of (s, a, r, s', done) tuples
             gamma (float): discount factor
         """
@@ -146,7 +151,7 @@ class SingleAgent():
         for target_param, local_param in zip(target_model.parameters(), local_model.parameters()):
             target_param.data.copy_(tau*local_param.data + (1.0-tau)*target_param.data)
 
-class MultiAgent():
+class AgentTrainer():
     """Manages the interaction between the agents and the environment"""
     def __init__(self, state_size, action_size, num_agents, random_seed):
         """Initialise the trainer object
@@ -160,7 +165,7 @@ class MultiAgent():
         self.action_size = action_size
         self.num_agents = num_agents
         self.agents = [
-            SingleAgent(state_size, action_size, self.num_agents, agent_index=i, random_seed=random_seed)
+            Agent(state_size, action_size, self.num_agents, agent_index=i, random_seed=random_seed)
             for i in range(self.num_agents)]
 
     def act(self, states, add_noise=True):
@@ -177,7 +182,7 @@ class MultiAgent():
 
     def step(self, states, actions, rewards, next_states, dones, timestep):
         for i, agent in enumerate(self.agents):
-            agent.step(states[i], actions[i], rewards[i], next_states[i], dones[i], timestep)
+            agent.step(states[i], actions[i], rewards[i], next_states[i], dones[i], timestep, self.agents)
 
     def reset(self):
         """Resets the noise for each agent"""
