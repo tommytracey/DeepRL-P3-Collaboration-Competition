@@ -12,20 +12,20 @@ import torch.optim as optim
 BUFFER_SIZE = int(1e6)  # replay buffer size
 BATCH_SIZE = 128        # minibatch size
 GAMMA = 0.99            # discount factor
-TAU = 6e-2              # for soft update of target parameters
+TAU = 1e-3              # for soft update of target parameters
 LR_ACTOR = 1e-3         # learning rate of the actor
 LR_CRITIC = 1e-3        # learning rate of the critic
 WEIGHT_DECAY = 0        # L2 weight decay
 LEARN_EVERY = 1         # learning timestep interval
-LEARN_NUM = 1           # number of learning passes
+LEARN_NUM = 5           # number of learning passes
 OU_SIGMA = 0.2          # Ornstein-Uhlenbeck noise parameter
-OU_THETA = 0.13         # Ornstein-Uhlenbeck noise parameter
+OU_THETA = 0.15         # Ornstein-Uhlenbeck noise parameter
 # EPSILON = 1.0           # explore->exploit noise process added to act step
 # EPSILON_DECAY = 4e-3    # decay rate for noise process
 
-eps_start = 6           # Noise level start
-eps_end = 0             # Noise level end
-eps_decay = 250         # Number of episodes to decay over from start to end
+eps_start = 3           # Noise level start
+eps_end = 0.01             # Noise level end
+eps_decay = 300         # Number of episodes to decay over from start to end
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -138,6 +138,7 @@ class Agent():
         # Minimize the loss
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
+        # torch.nn.utils.clip_grad_norm_(self.critic_local.parameters(), 1)        
         self.critic_optimizer.step()
 
         # ---------------------------- update actor ---------------------------- #
