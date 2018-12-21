@@ -18,14 +18,11 @@ LR_CRITIC = 1e-3        # learning rate of the critic
 WEIGHT_DECAY = 0        # L2 weight decay
 LEARN_EVERY = 1         # learning timestep interval
 LEARN_NUM = 5           # number of learning passes
-OU_SIGMA = 0.2          # Ornstein-Uhlenbeck noise parameter
-OU_THETA = 0.15         # Ornstein-Uhlenbeck noise parameter
-# EPSILON = 1.0           # explore->exploit noise process added to act step
-# EPSILON_DECAY = 4e-3    # decay rate for noise process
+OU_SIGMA = 0.2          # Ornstein-Uhlenbeck noise parameter, volatility
+OU_THETA = 0.15         # Ornstein-Uhlenbeck noise parameter, speed of mean reversion
+EPS = 1.0               # explore->exploit noise process added to act step
+EPS_DECAY = 4e-3        # decay rate for noise process
 
-eps_start = 3           # Noise level start
-eps_end = 0.01             # Noise level end
-eps_decay = 300         # Number of episodes to decay over from start to end
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -46,8 +43,8 @@ class Agent():
         self.action_size = action_size
         self.num_agents = num_agents
         self.seed = random.seed(random_seed)
-        self.eps = eps_start
-        self.t_step = 0
+        self.eps = EPS
+        self.timestep = 0
 
         # Actor Network (w/ Target Network)
         self.actor_local = Actor(state_size, action_size, random_seed).to(device)
@@ -67,12 +64,12 @@ class Agent():
 
     def step(self, state, action, reward, next_state, done, agent_number):
         """Save experience in replay memory, and use random sample from buffer to learn."""
-        self.t_step += 1
+        self.timestep += 1
         # Save experience / reward
         self.memory.add(state, action, reward, next_state, done)
 
         # Learn, if enough samples are available in memory and at interval settings
-        if len(self.memory) > BATCH_SIZE and self.t_step % LEARN_EVERY == 0:
+        if len(self.memory) > BATCH_SIZE and self.timestep % LEARN_EVERY == 0:
                 for _ in range(LEARN_NUM):
                     experiences = self.memory.sample()
                     self.learn(experiences, GAMMA, agent_number)
@@ -81,22 +78,15 @@ class Agent():
         """Returns actions for given state as per current policy."""
         states = torch.from_numpy(states).float().to(device)
         actions = np.zeros((self.num_agents, self.action_size))
-        # print('actions (zeros) = {}'.format(actions))
         self.actor_local.eval()
         with torch.no_grad():
             for agent_num, state in enumerate(states):
-                # print('agent_num = {}'.format(agent_num))
-                # print('state = {}'.format(state))
                 action = self.actor_local(state).cpu().data.numpy()
-                # print('action = {}'.format(action))
                 actions[agent_num, :] = action
-        # print('actions = {}'.format(actions))
         self.actor_local.train()
         if add_noise:
             actions += self.eps * self.noise.sample()
-        # print('actions (w/ noise) = {}'.format(actions))
         actions = np.clip(actions, -1, 1)
-        # print('actions (clipped) = {}'.format(actions))
         return actions
 
     def reset(self):
@@ -114,11 +104,6 @@ class Agent():
             gamma (float): discount factor
         """
         states, actions, rewards, next_states, dones = experiences
-        # print('states = {}'.format(states))
-        # print('actions = {}'.format(actions))
-        # print('rewards = {}'.format(rewards))
-        # print('next_states = {}'.format(next_states))
-        # print('dones = {}'.format(dones))
 
         # ---------------------------- update critic ---------------------------- #
         # Get predicted next-state actions and Q values from target models
@@ -138,7 +123,7 @@ class Agent():
         # Minimize the loss
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
-        # torch.nn.utils.clip_grad_norm_(self.critic_local.parameters(), 1)        
+        # torch.nn.utils.clip_grad_norm_(self.critic_local.parameters(), 1)
         self.critic_optimizer.step()
 
         # ---------------------------- update actor ---------------------------- #
@@ -161,9 +146,11 @@ class Agent():
         self.soft_update(self.actor_local, self.actor_target, TAU)
 
         # Update epsilon noise value
-        self.eps = self.eps - (1/eps_decay)
-        if self.eps < eps_end:
-            self.eps=eps_end
+        # self.eps = self.eps - (1/eps_decay)
+        # if self.eps < eps_end:
+        #     self.eps=eps_end
+        self.eps -= EPS_DECAY
+        self.noise.reset()
 
     def soft_update(self, local_model, target_model, tau):
         """Soft update model parameters.
