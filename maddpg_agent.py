@@ -11,20 +11,21 @@ import torch.optim as optim
 
 BUFFER_SIZE = int(1e6)  # replay buffer size
 BATCH_SIZE = 128        # minibatch size
-GAMMA = 0.99            # discount factor
-TAU = 1e-3              # for soft update of target parameters
 LR_ACTOR = 1e-3         # learning rate of the actor
 LR_CRITIC = 1e-3        # learning rate of the critic
 WEIGHT_DECAY = 0        # L2 weight decay
 LEARN_EVERY = 1         # learning timestep interval
 LEARN_NUM = 5           # number of learning passes
-OU_SIGMA = 0.2          # Ornstein-Uhlenbeck noise parameter, volatility
-OU_THETA = 0.15         # Ornstein-Uhlenbeck noise parameter, speed of mean reversion
-EPS = 1.0               # explore->exploit noise process added to act step
-EPS_DECAY = 4e-3        # decay rate for noise process
-
+GAMMA = 0.99            # discount factor
+TAU = 1e-3              # for soft update of target parameters
+OU_SIGMA = 0.1          # Ornstein-Uhlenbeck noise parameter, volatility
+OU_THETA = 0.2          # Ornstein-Uhlenbeck noise parameter, speed of mean reversion
+EPS_START = 4.0         # initial value for epsilon in noise decay process in Agent.act()
+EPS_EP_END = 300        # episode to end the noise decay process
+EPS_FINAL = 0           # final value for epsilon after decay
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 
 class Agent():
     """Interacts with and learns from the environment."""
@@ -43,7 +44,8 @@ class Agent():
         self.action_size = action_size
         self.num_agents = num_agents
         self.seed = random.seed(random_seed)
-        self.eps = EPS
+        self.eps = EPS_START
+        self.eps_decay = 1/(EPS_EP_END*LEARN_NUM)
         self.timestep = 0
 
         # Actor Network (w/ Target Network)
@@ -145,11 +147,9 @@ class Agent():
         self.soft_update(self.critic_local, self.critic_target, TAU)
         self.soft_update(self.actor_local, self.actor_target, TAU)
 
-        # Update epsilon noise value
-        # self.eps = self.eps - (1/eps_decay)
-        # if self.eps < eps_end:
-        #     self.eps=eps_end
-        self.eps -= EPS_DECAY
+        # update noise decay
+        self.eps -= self.eps_decay
+        self.eps = max(self.eps, EPS_FINAL)
         self.noise.reset()
 
     def soft_update(self, local_model, target_model, tau):
@@ -164,12 +164,17 @@ class Agent():
         for target_param, local_param in zip(target_model.parameters(), local_model.parameters()):
             target_param.data.copy_(tau*local_param.data + (1.0-tau)*target_param.data)
 
-
 class OUNoise:
     """Ornstein-Uhlenbeck process."""
 
     def __init__(self, size, seed, mu=0.0, theta=OU_THETA, sigma=OU_SIGMA):
-        """Initialize parameters and noise process."""
+        """Initialize parameters and noise process.
+        Params
+        ======
+            mu (float)    : long-running mean
+            theta (float) : speed of mean reversion
+            sigma (float) : volatility parameter
+        """
         self.mu = mu * np.ones(size)
         self.theta = theta
         self.sigma = sigma
