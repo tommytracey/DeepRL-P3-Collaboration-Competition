@@ -17,10 +17,10 @@ WEIGHT_DECAY = 0        # L2 weight decay
 LEARN_EVERY = 1         # learning timestep interval
 LEARN_NUM = 5           # number of learning passes
 GAMMA = 0.99            # discount factor
-TAU = 1e-3              # for soft update of target parameters
-OU_SIGMA = 0.1          # Ornstein-Uhlenbeck noise parameter, volatility
-OU_THETA = 0.2          # Ornstein-Uhlenbeck noise parameter, speed of mean reversion
-EPS_START = 4.0         # initial value for epsilon in noise decay process in Agent.act()
+TAU = 8e-3              # for soft update of target parameters
+OU_SIGMA = 0.2          # Ornstein-Uhlenbeck noise parameter, volatility
+OU_THETA = 0.15          # Ornstein-Uhlenbeck noise parameter, speed of mean reversion
+EPS_START = 5.0         # initial value for epsilon in noise decay process in Agent.act()
 EPS_EP_END = 300        # episode to end the noise decay process
 EPS_FINAL = 0           # final value for epsilon after decay
 
@@ -125,7 +125,7 @@ class Agent():
         # Minimize the loss
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
-        # torch.nn.utils.clip_grad_norm_(self.critic_local.parameters(), 1)
+        torch.nn.utils.clip_grad_norm_(self.critic_local.parameters(), 1)
         self.critic_optimizer.step()
 
         # ---------------------------- update actor ---------------------------- #

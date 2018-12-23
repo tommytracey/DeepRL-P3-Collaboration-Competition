@@ -118,7 +118,7 @@ for i_episode in range(1, N_EPISODES+1):
             torch.save(agent_1.critic_local.state_dict(), 'models/checkpoint_critic_1.pth')
         # stop training if model stops improving
         elif (i_episode-best_episode) >= 200:
-            print('<-- Training stopped. Best score not topped for 200 episodes')
+            print('<-- Training stopped. Best score not matched or exceeded for 200 episodes')
             break
         else:
             continue
