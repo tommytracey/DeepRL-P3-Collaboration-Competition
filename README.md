@@ -204,23 +204,25 @@ The implementation of the replay buffer can be found [here](https://github.com/t
 ##### &nbsp;
 
 ## Results
-Once all of the various components of the algorithm were in place, my agent was able to solve the 20 agent Reacher environment. Again, the performance goal is an average reward of at least +30 over 100 episodes, and over all 20 agents.
+Once all of the above components were in place, the agents were able to solve the Tennis environment. Again, the performance goal is an average reward of at least +0.5 over 100 episodes, taking the best score from either agent for a given episode.
 
-The graph below shows the final results. The best performing agent was able to solve the environment starting with the 12th episode, with a top mean score of 39.3 in the 79th episode. The complete set of results and steps can be found in [this notebook](Continuous_Control_v8.ipynb).
+[Here](https://youtu.be/LT7xtEmoZkY) is a video showing the trained agents playing a few points.
 
-<img src="assets/results-graph.png" width="70%" align="top-left" alt="" title="Results Graph" />
+<a href="https://youtu.be/LT7xtEmoZkY"><img src="assets/video-thumbnail.png" width="30%" align="top-left" alt="" title="Tennis Agent Video" /></a>
 
-<img src="assets/output.png" width="100%" align="top-left" alt="" title="Final output" />
+The graph below shows the final training results. The best performing agents were able to solve the environment in 607 episodes, with a top score of 5.2 and a top moving average of 0.927. The complete set of results and steps can be found in [this notebook](Tennis_final.ipynb).
+
+<img src="assets/best-model-graph.png" width="70%" align="top-left" alt="" title="Results Graph" />
+
 
 
 ##### &nbsp;
 
 ## Future Improvements
-- **Experiment with other algorithms** &mdash; Tuning the DDPG algorithm required a lot of trial and error. Perhaps another algorithm such as [Trust Region Policy Optimization (TRPO)](https://arxiv.org/abs/1502.05477), [Proximal Policy Optimization (PPO)](Proximal Policy Optimization Algorithms), or [Distributed Distributional Deterministic Policy Gradients (D4PG)](https://arxiv.org/abs/1804.08617) would be more robust.
-- **Add *prioritized* experience replay** &mdash; Rather than selecting experience tuples randomly, prioritized replay selects experiences based on a priority value that is correlated with the magnitude of error. This can improve learning by increasing the probability that rare and important experience vectors are sampled.
+- **Add *prioritized* experience replay** &mdash; Rather than selecting experience tuples randomly, prioritized replay selects experiences based on a priority value that is correlated with the magnitude of error. This can improve learning by increasing the probability that rare or important experience vectors are sampled.
 - **Batch Normalization** &mdash; I did not use batch normalization on this project, but I probably should have. I've used batch normalization many times in the past when building convolutional neural networks (CNN), in order to squash pixel values. But, it didn't occur to me that it would be to this project. This is an aspect of this [Google DeepMind paper](https://arxiv.org/pdf/1509.02971.pdf) that has proved tremendously useful in my implementation of other projects.
   - Similar to the exploding gradient issue mentioned above, running computations on large input values and model parameters can inhibit learning. Batch normalization addresses this problem by scaling the features to be within the same range throughout the model and across different environments and units. In additional to normalizing each dimension to have unit mean and variance, the range of values is often much smaller, typically between 0 and 1.
-  - You can find batch normalization implemented [here](https://github.com/tommytracey/DeepRL-P2-Continuous-Control/blob/master/model.py#L41) for the actor, and [here](https://github.com/tommytracey/DeepRL-P2-Continuous-Control/blob/master/model.py#L75) for the critic, within `model.py` of the source code of my previous project.
+  - You can find batch normalization implemented [here](https://github.com/tommytracey/DeepRL-P2-Continuous-Control/blob/master/model.py#L41) for the actor, and [here](https://github.com/tommytracey/DeepRL-P2-Continuous-Control/blob/master/model.py#L75) for the critic, within `model.py` of the source code of my previous project. These greatly improved model performance.
 
 
 ##### &nbsp;
@@ -229,7 +231,7 @@ The graph below shows the final results. The best performing agent was able to s
 ---
 
 # Project Starter Code
-If you want to run this project yourself, the project starter code can be found below or [here](https://github.com/udacity/deep-reinforcement-learning/tree/master/p2_continuous-control) within Udacity's source repo for this project.
+If you want to run this project yourself, the project starter code can be found below or [here](https://github.com/udacity/deep-reinforcement-learning/tree/master/p3_collab-compet) within Udacity's source repo for this project.
 
 [//]: # (Image References)
 
