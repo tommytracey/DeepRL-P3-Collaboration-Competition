@@ -211,6 +211,7 @@ The graph below shows the final training results. The best performing agents wer
 
 <img src="assets/best-model-graph.png" width="70%" align="top-left" alt="" title="Results Graph" />
 
+<img src="assets/training-output.png" width="70%" align="top-left" alt="" title="Training Output" />
 
 
 ##### &nbsp;
