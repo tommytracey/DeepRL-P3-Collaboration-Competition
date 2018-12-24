@@ -8,26 +8,17 @@
 
 ---
 ##### &nbsp;
-##### &nbsp;
-##### &nbsp;
 
-![Trained Agent][image1]
+<img src="assets/robot-table-tennis.gif" width="70%" align="top-left" alt="" title="Robot Ping Pong" />
 
-<img src="assets/robot-pickers.gif" width="60%" align="top-left" alt="" title="Robot Arms" />
-
-_Photo credit: []()_
+[//]: # (_Photo credit: []_)
 
 ##### &nbsp;
 
-[//]: # (## Background)
+## Background
+For artificial intelligence (AI) to reach its full potential, AI systems need to interact safely and efficiently with humans, as well as other agents. There are already environments where this happens on a daily basis, such as the stock market. And there are future applications that will rely on productive agent-human interactions, such as self-driving cars and other autonomous vehicles.
 
-[//]: # (> Successfully scaling RL to environments with multiple agents is crucial to building artificially intelligent systems that can productively interact with humans and each other. Most of the successes of RL have been in single agent domains,
-where modelling or predicting the behaviour of other actors in the environment is largely unnecessary.
-However, there are a number of important applications that involve interaction between multiple
-agents, where emergent behavior and complexity arise from agents co-evolving together. For example,
-multi-robot control [20], the discovery of communication and language [29, 8, 24], multiplayer games
-[27], and the analysis of social dilemmas [17] all operate in a multi-agent domain.)
-
+One step along this path is to train AI agents to interact with other agents in both cooperative and competitive settings. Reinforcement learning (RL) is a subfield of AI that's shown promise. However, thus far, much of RL's success has been in single agent domains, where building models that predict the behavior of other actors is unnecessary. As a result, traditional RL approaches (such as Q-Learning) are not well-suited for the complexity that accompanies environments where multiple agents are continuously interacting and evolving their policies.
 
 [//]: # (> Unfortunately, traditional reinforcement learning approaches such as Q-Learning or policy gradient
 are poorly suited to multi-agent environments. One issue is that each agent’s policy is changing
@@ -41,8 +32,15 @@ perspective, as evidenced by the notorious instability of adversarial training m
 
 [//]: # (https://papers.nips.cc/paper/7217-multi-agent-actor-critic-for-mixed-cooperative-competitive-environments.pdf)
 
+##### &nbsp;
+
 ## Goal
-For this project, we work with an environment that is similar to, but not identical to the [Tennis](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Learning-Environment-Examples.md#tennis) environment on the Unity ML-Agents GitHub page.
+The goal of this project is to train two RL agents to play tennis. As in real tennis, the goal of each player is to keep the ball in play. And, when you have two equally matched opponents, you tend to see fairly long exchanges where the players hit the ball back and forth over the net.
+
+##### &nbsp;
+
+## The Environment
+We'll work with an environment that is similar, but not identical to the [Tennis](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Learning-Environment-Examples.md#tennis) environment on the Unity ML-Agents GitHub page.
 
 In this environment, two agents control rackets to bounce a ball over a net. If an agent hits the ball over the net, it receives a reward of +0.1.  If an agent lets a ball hit the ground or hits the ball out of bounds, it receives a reward of -0.01.  Thus, the goal of each agent is to keep the ball in play.
 
@@ -57,67 +55,26 @@ The environment is considered solved, when the average (over 100 episodes) of th
 
 ![Trained Agent][image1]
 
-## Summary of Environment
-- Set-up: Double-jointed arm which can move to target locations.
-- Goal: Each agent must move its hand to the goal location, and keep it there.
-- Agents: The environment contains 20 agents linked to a single Brain.
-- Agent Reward Function (independent):
-  - +0.1 for each timestep agent's hand is in goal location.
-- Brains: One Brain with the following observation/action space.
-  - Vector Observation space: 33 variables corresponding to position, rotation, velocity, and angular velocities of the two arm Rigidbodies.
-  - Vector Action space: (Continuous) Each action is a vector with four numbers, corresponding to torque applicable to two joints. Every entry in the action vector should be a number between -1 and 1.
-  - Visual Observations: None.
-- Reset Parameters: Two, corresponding to goal size, and goal movement speed.
-- Benchmark Mean Reward: 30
-
-
 ##### &nbsp;
 
 ## Approach
 Here are the high-level steps taken in building an agent that solves this environment.
 
-1. Evaluate the state and action space.
 1. Establish performance baseline using a random action policy.
 1. Select an appropriate algorithm and begin implementing it.
 1. Run experiments, make revisions, and retrain the agent until the performance threshold is reached.
 
 ##### &nbsp;
 
-### 1. Evaluate State & Action Space
-The state space space has 33 dimensions corresponding to the position, rotation, velocity, and angular velocities of the robotic arm. There are two sections of the arm &mdash; analogous to those connecting the shoulder and elbow (i.e., the humerus), and the elbow to the wrist (i.e., the forearm) on a human body.
+### 1. Establish Baseline
+Before building agents that learns, I started by testing ones that select actions (uniformly) at random at each time step.
 
-Each action is a vector with four numbers, corresponding to the torque applied to the two joints (shoulder and elbow). Every element in the action vector must be a number between -1 and 1, making the action space continuous.
-
-##### &nbsp;
-
-### 2. Establish Baseline
-Before building an agent that learns, I started by testing an agent that selects actions (uniformly) at random at each time step.
-
-```python
-env_info = env.reset(train_mode=False)[brain_name]     # reset the environment    
-states = env_info.vector_observations                  # get the current state (for each agent)
-scores = np.zeros(num_agents)                          # initialize the score (for each agent)
-while True:
-    actions = np.random.randn(num_agents, action_size) # select an action (for each agent)
-    actions = np.clip(actions, -1, 1)                  # all actions between -1 and 1
-    env_info = env.step(actions)[brain_name]           # send all actions to tne environment
-    next_states = env_info.vector_observations         # get next state (for each agent)
-    rewards = env_info.rewards                         # get reward (for each agent)
-    dones = env_info.local_done                        # see if episode finished
-    scores += env_info.rewards                         # update the score (for each agent)
-    states = next_states                               # roll over states to next time step
-    if np.any(dones):                                  # exit loop if episode finished
-        break
-print('Total score (averaged over agents) this episode: {}'.format(np.mean(scores)))
-```
-
-Running this agent a few times resulted in scores from 0.03 to 0.09. Obviously, if the agent needs to achieve an average score of 30 over 100 consecutive episodes, then choosing actions at random won't work.
-
+Running the random agents a few times resulted in scores from 0 to 0.02. Obviously, if these agents need to achieve an average score of 0.5 over 100 consecutive episodes, then choosing actions at random won't work. However, when you watch the agents acting randomly, it becomes clear that these types of sporadic actions can be useful early in the training process. That is, they can help the agents explore the action space to find some signal of good vs. bad actions. This insight will come into play later when we implement the Ornstein-Uhlenbeck process and epsilon noise decay.
 
 ##### &nbsp;
 
-### 3. Implement Learning Algorithm
-To get started, there are a few high-level architecture decisions we need to make. First, we need to determine which types of algorithms are most suitable for the Reacher environment. Second, we need to determine how many "brains" we want controlling the actions of our agents.
+### 2. Implement Learning Algorithm
+To get started, there are a few high-level architecture decisions we need to make. First, we need to determine which types of algorithms are most suitable for the Reacher environment. 
 
 #### Policy-based vs Value-based Methods
 There are two key differences in the Reacher environment compared to the previous ['Navigation' project](https://github.com/tommytracey/DeepRL-P1-Navigation):
@@ -267,7 +224,7 @@ The implementation of the replay buffer can be found [here](https://github.com/t
 
 ##### &nbsp;
 
-### 4. Results
+## Results
 Once all of the various components of the algorithm were in place, my agent was able to solve the 20 agent Reacher environment. Again, the performance goal is an average reward of at least +30 over 100 episodes, and over all 20 agents.
 
 The graph below shows the final results. The best performing agent was able to solve the environment starting with the 12th episode, with a top mean score of 39.3 in the 79th episode. The complete set of results and steps can be found in [this notebook](Continuous_Control_v8.ipynb).
