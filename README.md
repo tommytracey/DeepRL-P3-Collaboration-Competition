@@ -4,9 +4,6 @@
 ##### &nbsp;
 
 ---
-# PROJECT IN PROGRESS &mdash; IGNORE THE WRITE-UP BELOW FOR NOW
-
----
 ##### &nbsp;
 
 <img src="assets/robot-table-tennis.gif" width="70%" align="top-left" alt="" title="Robot Ping Pong" />
