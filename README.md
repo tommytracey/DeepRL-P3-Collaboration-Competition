@@ -3,9 +3,6 @@
 # Train Two RL Agents to Play Tennis
 ##### &nbsp;
 
----
-##### &nbsp;
-
 <img src="assets/robot-table-tennis.gif" width="70%" align="top-left" alt="" title="Robot Ping Pong" />
 
 [//]: # (_Photo credit: []_)
