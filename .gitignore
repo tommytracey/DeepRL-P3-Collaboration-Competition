@@ -27,7 +27,7 @@
 **/videos
 **/video
 
-**/models
+# **/models
 !**/models/gold
 **/test_models
 **/reading
