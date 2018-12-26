@@ -2,7 +2,7 @@
 # and performs training loop
 
 from collections import deque
-from maddpg_agent import Agent #, AgentTrainer
+from maddpg_agent import Agent
 import numpy as np
 import os
 import time
@@ -16,14 +16,26 @@ PRINT_EVERY = 10
 ADD_NOISE = True
 
 
+## Helper functions
+
 def seeding(seed=1):
     np.random.seed(seed)
     torch.manual_seed(seed)
 
 def get_actions(states, add_noise):
-    action_0 = agent_0.act(states, add_noise)    # agent 0 chooses an action
-    action_1 = agent_1.act(states, add_noise)    # agent 1 chooses an action
-    return np.concatenate((action_0, action_1), axis=0).flatten()
+    actions = [agent.act(states, add_noise) for agent in agents]
+    # flatten action pairs into a single vector
+    return np.reshape(actions, (1, num_agents*action_size))
+
+def reset_agents():
+    for agent in agents:
+        agent.reset()
+
+def learning_step(states, actions, rewards, next_states, done):
+    for i, agent in enumerate(agents):
+        agent.step(states, actions, rewards[i], next_states, done, i)
+
+## Training loop
 
 # start environment
 env = UnityEnvironment(file_name='Tennis.app')
@@ -50,8 +62,7 @@ print('There are {} agents. Each observes a state with length: {}'.format(states
 print('The state for the first agent looks like: \n{}\n'.format(states[0]))
 
 # initialize agents
-agent_0 = Agent(state_size, action_size, num_agents=1, random_seed=1)
-agent_1 = Agent(state_size, action_size, num_agents=1, random_seed=1)
+agents = [Agent(state_size, action_size, num_agents=1, random_seed=1) for i in range(num_agents)]
 
 # initialize scoring
 scores_window = deque(maxlen=CONSEC_EPISODES)
@@ -63,24 +74,22 @@ already_solved = False
 
 for i_episode in range(1, N_EPISODES+1):
     env_info = env.reset(train_mode=True)[brain_name]      # reset the environment
-    states = np.reshape(env_info.vector_observations, (1,48)) # get states and combine them
-    agent_0.reset()
-    agent_1.reset()
+    states = np.reshape(env_info.vector_observations, (1,num_agents*state_size)) # flatten states
+    reset_agents()
     scores = np.zeros(num_agents)
     while True:
-        actions = get_actions(states, ADD_NOISE)           # choose agent actions and combine them
-        env_info = env.step(actions)[brain_name]           # send both agents' actions together to the environment
-        next_states = np.reshape(env_info.vector_observations, (1, 48)) # combine each agents next states
-        rewards = env_info.rewards                         # get reward
-        done = env_info.local_done                         # see if episode finished
-        agent_0.step(states, actions, rewards[0], next_states, done, 0) # agent 1 learns
-        agent_1.step(states, actions, rewards[1], next_states, done, 1) # agent 2 learns
-        scores += np.max(rewards)                          # update the score for each agent
+        actions = get_actions(states, ADD_NOISE)           # choose agent actions and flatten them
+        env_info = env.step(actions)[brain_name]           # send both agents' actions to the environment
+        next_states = np.reshape(env_info.vector_observations, (1, num_agents*state_size)) # flatten next states
+        rewards = env_info.rewards                         # get rewards
+        done = env_info.local_done                         # see if the episode finished
+        learning_step(states, actions, rewards, next_states, done)  # perform the learning step
+        scores += np.max(rewards)                          # update scores with best reward
         states = next_states                               # roll over states to next time step
         if np.any(done):                                   # exit loop if episode finished
             break
 
-    ep_best_score = np.max(scores)                         # best score for episode
+    ep_best_score = np.max(scores)                         # record best score for episode
     scores_window.append(ep_best_score)                    # add score to recent scores
     scores_all.append(ep_best_score)                       # add score to histor of all scores
     moving_average.append(np.mean(scores_window))          # recalculate moving average
