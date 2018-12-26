@@ -204,11 +204,11 @@ The implementation of the replay buffer can be found [here](https://github.com/t
 ## Results
 Once all of the above components were in place, the agents were able to solve the Tennis environment. Again, the performance goal is an average reward of at least +0.5 over 100 episodes, taking the best score from either agent for a given episode.
 
-[Here](https://youtu.be/LT7xtEmoZkY) is a video showing the trained agents playing a few points.
+[Here](https://youtu.be/jOWWzygOi1A) is a video showing the trained agents playing a few points.
 
-<a href="https://youtu.be/LT7xtEmoZkY"><img src="assets/video-thumbnail.png" width="30%" align="top-left" alt="" title="Tennis Agent Video" /></a>
+<a href="https://youtu.be/jOWWzygOi1A"><img src="assets/video-thumbnail.png" width="30%" align="top-left" alt="" title="Tennis Agent Video" /></a>
 
-The graph below shows the final training results. The best performing agents were able to solve the environment in 607 episodes, with a top score of 5.2 and a top moving average of 0.927. The complete set of results and steps can be found in [this notebook](Tennis_final.ipynb).
+The graph below shows the final training results. The best performing agents were able to solve the environment in 607 episodes, with a top score of 5.2 and a top moving average of 0.927. The complete set of results and steps can be found in [this notebook](Tennis.ipynb).
 
 <img src="assets/best-model-graph.png" width="70%" align="top-left" alt="" title="Results Graph" />
 
@@ -255,8 +255,13 @@ If you want to run this project yourself, the project starter code can be found 
 2. Place the file in the DRLND GitHub repository, in the `p3_collab-compet/` folder, and unzip (or decompress) the file.
 
 ### Instructions
+You can run the code using the following command in your terminal:
 
-Follow the instructions in `Tennis.ipynb` to get started with training your own agent!  
+```$ python main.py
+```
+
+You can also follow the instructions in `Tennis.ipynb`. 
+
 
 ### (Optional) Challenge: Crawler Environment
 
