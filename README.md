@@ -21,8 +21,7 @@ One step along this path is to train AI agents to interact with other agents in 
 are poorly suited to multi-agent environments. One issue is that each agent’s policy is changing
 as training progresses, and the environment becomes non-stationary from the perspective of any
 individual agent in a way that is not explainable by changes in the agent’s own policy. This presents
-learning stability challenges and prevents the straightforward use of past experience replay, which is crucial for stabilizing deep Q-learning. Policy gradient methods, on the other hand, usually exhibit very high variance when coordination of multiple agents is required. Alternatively, one can use model-based
-policy optimization which can learn optimal policies via back-propagation, but this requires
+learning stability challenges and prevents the straightforward use of past experience replay, which is crucial for stabilizing deep Q-learning. Policy gradient methods, on the other hand, usually exhibit very high variance when coordination of multiple agents is required. Alternatively, one can use model-based policy optimization which can learn optimal policies via back-propagation, but this requires
 a differentiable model of the world dynamics and assumptions about the interactions between
 agents. Applying these methods to competitive environments is also challenging from an optimization
 perspective, as evidenced by the notorious instability of adversarial training methods [11].)
@@ -60,6 +59,8 @@ Here are the high-level steps taken in building an agent that solves this enviro
 1. Establish performance baseline using a random action policy.
 1. Select an appropriate algorithm and begin implementing it.
 1. Run experiments, make revisions, and retrain the agent until the performance threshold is reached.
+
+WARNING: I ultimately reached a good solution; however, the results were not consistent. My "best" results were only reproducible if I reran the model numerous times (>10). If you just run the model once (or even 3-5 times), it might not converge. And, during the initial implementation, I ran the model at least 30 times while searching for a reliable set of hyperparameters. If you want to experiment with different approaches, I strongly recommend implementing a more systemic approach such as grid search (which I did not do, but wish I had).
 
 ##### &nbsp;
 
@@ -217,6 +218,7 @@ The graph below shows the final training results. The best performing agents wer
 ##### &nbsp;
 
 ## Future Improvements
+- **Address stability issues to produce more consistent results** &mdash; My "best" results are only reproducible if you run the model numerous times. If you just run it once (or even 3-5 times) the model might not converge. I ran the model at least 30 while searching for a good set of hyperparameters, so perhaps implementing a more systemic approach such as grid search would help. Otherwise, more research is needed to find a more stable algorithm, or to make changes to the current DDPG algorithm.
 - **Add *prioritized* experience replay** &mdash; Rather than selecting experience tuples randomly, prioritized replay selects experiences based on a priority value that is correlated with the magnitude of error. This can improve learning by increasing the probability that rare or important experience vectors are sampled.
 - **Batch Normalization** &mdash; I did not use batch normalization on this project, but I probably should have. I've used batch normalization many times in the past when building convolutional neural networks (CNN), in order to squash pixel values. But, it didn't occur to me that it would be to this project. This is an aspect of this [Google DeepMind paper](https://arxiv.org/pdf/1509.02971.pdf) that has proved tremendously useful in my implementation of other projects.
   - Similar to the exploding gradient issue mentioned above, running computations on large input values and model parameters can inhibit learning. Batch normalization addresses this problem by scaling the features to be within the same range throughout the model and across different environments and units. In additional to normalizing each dimension to have unit mean and variance, the range of values is often much smaller, typically between 0 and 1.
